@@ -19,15 +19,14 @@ async function startServer() {
   const getAIClient = () => {
     if (process.env.GEMINI_API_KEY) {
       return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    } else {
-      // Vertex AI with ADC
-      return new GoogleGenAI({
-        vertexAI: {
-          project: process.env.GCLOUD_PROJECT || '',
-          location: process.env.GCLOUD_LOCATION || 'us-central1',
-        }
-      });
     }
+    // Vertex AI with ADC (Explicitly passing config to avoid SDK issues)
+    return new GoogleGenAI({
+      vertexAI: {
+        project: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || '',
+        location: process.env.GOOGLE_CLOUD_LOCATION || process.env.GCLOUD_LOCATION || 'us-central1',
+      }
+    });
   };
 
   // API Routes
@@ -98,9 +97,10 @@ async function startServer() {
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
-        contents: {
+        contents: [{
+          role: 'user',
           parts: [{ text: prompt }],
-        },
+        }],
         config: {
           imageConfig: {
             aspectRatio: "16:9",

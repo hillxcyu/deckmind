@@ -1,39 +1,29 @@
-# Stage 1: Build the application
+# Stage 1: Build the frontend
 FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
+# Stage 2: Run the server
+FROM node:20-alpine
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
+# Install all dependencies (including tsx)
 RUN npm ci
 
-# Copy source code
+# Copy frontend build from builder
+COPY --from=builder /app/dist ./dist
+
+# Copy source code (server.ts and src/ are needed)
 COPY . .
 
-# Build the application
-# Note: We don't pass GEMINI_API_KEY here because we want runtime configuration
-RUN npm run build
+# Expose port 3000
+EXPOSE 3000
 
-# Stage 2: Serve the application with Nginx
-FROM nginx:alpine
-
-# Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
-# Expose port 80
-EXPOSE 80
-
-# Use the entrypoint script
-ENTRYPOINT ["/docker-entrypoint.sh"]
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the server
+CMD ["npx", "tsx", "server.ts"]
