@@ -1,0 +1,5 @@
+{
+  "name": "DeckMind",
+  "description": "AI-powered slide deck creator with chat interface and style customization",
+  "requestFramePermissions": []
+}
