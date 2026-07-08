@@ -1,0 +1,43 @@
+steps:
+  # 1. Build the image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '$_IMAGE', '.']
+
+  # 2. Push the image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$_IMAGE']
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'deckmind-app'
+      - '--image'
+      - '$_IMAGE'
+      - '--add-cloudsql-instances'
+      - '$_INSTANCE_CONNECTION'
+      - '--update-env-vars'
+      - 'DATABASE_URL=$_DB_URL,JWT_SECRET=$_JWT_SECRET,GOOGLE_CLOUD_PROJECT=$_PROJECT_ID,GOOGLE_CLOUD_LOCATION=$_MODEL_LOCATION'
+      - '--platform'
+      - 'managed'
+      - '--region'
+      - '$_REGION'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '1'
+
+images:
+  - '$_IMAGE'
+
+substitutions:
+  _IMAGE: 'asia-east1-docker.pkg.dev/universal-trail-492014-n5/deckmind-repo/deckmind-app:latest'
+  _INSTANCE_CONNECTION: 'universal-trail-492014-n5:asia-east1:deckmind-db'
+  _DB_URL: 'postgresql://postgres:X1aoch5an@/deckmind?host=/cloudsql/universal-trail-492014-n5:asia-east1:deckmind-db'
+  _JWT_SECRET: '+VmTWmhaI+lL0JLKRCk/6s4pRtGMhyWpSsCsxGeGUuE='
+  _PROJECT_ID: 'universal-trail-492014-n5'
+  _REGION: 'asia-east1'
+  _MODEL_LOCATION: 'global'

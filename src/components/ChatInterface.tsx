@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Message, Slide } from '../types';
-import { generateChatResponse } from '../services/gemini';
-import { Send, Paperclip, Image as ImageIcon, Loader2, X, AlertTriangle, Globe } from 'lucide-react';
+import { generateChatResponse, getChatSuggestions } from '../services/gemini';
+import { Send, Paperclip, Image as ImageIcon, Loader2, X, AlertTriangle, Sparkles, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -9,15 +9,19 @@ interface ChatInterfaceProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   onUpdateDeck: (slides: Slide[]) => void;
+  onUpdateSlide: (index: number, updates: Partial<Slide>) => void;
   stylePrompt: string;
+  selectedSlideId: string | null;
+  currentSlides: Slide[];
+  onSlideSelect: (id: string | null) => void;
 }
 
-export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt }: ChatInterfaceProps) {
+export function ChatInterface({ messages, setMessages, onUpdateDeck, onUpdateSlide, stylePrompt, selectedSlideId, currentSlides, onSlideSelect }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [attachment, setAttachment] = useState<{ name: string; type: string; data: string } | null>(null);
   const [isOverloaded, setIsOverloaded] = useState(false);
-  const [useSearch, setUseSearch] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,7 +44,7 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const base64 = e.target?.result as string;
       if (!base64) {
           console.error("Failed to read file: result is empty");
@@ -67,13 +71,36 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
           else mimeType = 'application/octet-stream';
       }
 
-      console.log(`File selected: ${file.name}, Type: ${mimeType}, Size: ${base64Data.length} chars`);
+      console.log(`File selected: ${file.name}, Type: ${mimeType}, Size: ${base64Data.length} chars. Uploading...`);
+      setIsLoading(true);
 
-      setAttachment({
-        name: file.name,
-        type: mimeType,
-        data: base64Data
-      });
+      try {
+          const response = await fetch('/api/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  filename: file.name,
+                  mimeType: mimeType,
+                  data: base64Data
+              })
+          });
+
+          if (!response.ok) throw new Error("Upload failed");
+          const result = await response.json();
+
+          setAttachment({
+            name: file.name,
+            type: mimeType,
+            data: undefined, // Cleared to save memory
+            id: result.id,
+            url: result.url
+          });
+      } catch (error) {
+          console.error("Upload Error:", error);
+          alert("Failed to upload file.");
+      } finally {
+          setIsLoading(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -82,13 +109,21 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
     if ((!input.trim() && !attachment) || isLoading) return;
     setIsOverloaded(false); // Reset overload state
 
+    // Determine selected slide index early
+    let selectedIndex = -1;
+    if (selectedSlideId) {
+        selectedIndex = currentSlides.findIndex(s => s.id === selectedSlideId);
+    }
+
     // Construct the user message for state/history
-    // If there's an attachment, we append a text representation so the history remains valid
-    // (We don't store the full base64 in history to save tokens/memory for now)
     let messageText = input;
+    if (selectedIndex !== -1) {
+        messageText = `(Referring to Slide #${selectedIndex + 1}) ${messageText}`;
+    }
+
     if (attachment) {
         const attachmentLabel = `[Attachment: ${attachment.name}]`;
-        messageText = input ? `${input}\n${attachmentLabel}` : attachmentLabel;
+        messageText = input ? `${messageText}\n${attachmentLabel}` : `${messageText} ${attachmentLabel}`;
     }
 
     const userMsg: Message = { 
@@ -102,30 +137,15 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
     setInput('');
     const currentAttachment = attachment; 
     setAttachment(null); 
+    setSuggestions([]); // Clear suggestions
     setIsLoading(true);
 
     try {
       // Prepare history from messages state
-      // We pass the full message object including attachment to the service
-      // The service will handle formatting it for the API
       const history = messages;
 
       const systemInstruction = `
-        You are an expert presentation designer helping a user create a slide deck.
-        
         Current Style Context: ${stylePrompt}
-        
-        Your goal is to help the user compose the content for their slides. Follow this strict process:
-
-        PHASE 1: OUTLINE
-        1. First, understand the topic and audience.
-        2. Propose a high-level OUTLINE of the deck (a list of slide titles and brief ideas).
-        3. Do NOT call the 'update_deck' tool yet. Wait for the user to agree to or modify the outline.
-
-        PHASE 2: DETAILED CONTENT
-        4. Once the user approves the outline, flesh out the content for each slide.
-        5. Call the 'update_deck' tool to generate the slides. 
-        6. The 'update_deck' tool requires a full list of slides. You should maintain the state of the deck in your context and update it incrementally.
         
         GENERAL RULES:
         - Be helpful, creative, and ensure the content fits the chosen style.
@@ -134,7 +154,13 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
       `;
 
       let messagePayload: any = input;
-      if (currentAttachment) {
+      if (currentAttachment && currentAttachment.id) {
+          messagePayload = {
+              text: input,
+              attachmentId: currentAttachment.id // Send ID instead of inlineData
+          };
+      } else if (currentAttachment && currentAttachment.data) {
+          // Fallback for legacy local attachments (if any)
           messagePayload = {
               text: input,
               inlineData: {
@@ -144,10 +170,13 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
           };
       }
 
-      const responseText = await generateChatResponse(history, messagePayload, systemInstruction, onUpdateDeck, 0, useSearch);
+      const responseText = await generateChatResponse(history, messagePayload, systemInstruction, onUpdateDeck, onUpdateSlide, 0, selectedIndex);
 
       const modelMsg: Message = { role: 'model', text: responseText, timestamp: Date.now() };
       setMessages(prev => [...prev, modelMsg]);
+      
+      // Generate suggestions in background
+      getChatSuggestions([...messages, userMsg, modelMsg]).then(s => setSuggestions(s));
     } catch (error: any) {
       console.error("Chat error", error);
       const errorMessage = error.toString();
@@ -159,14 +188,32 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
       }
     } finally {
       setIsLoading(false);
+      onSlideSelect(null); // Clear selected slide after sending message
     }
   };
 
   return (
     <div className="flex flex-col h-full bg-gray-50 border-r border-gray-200 relative">
+      {/* Header with Clear Button */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm shrink-0 z-10">
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Assistant</h2>
+        <button 
+            onClick={() => {
+                if (messages.length > 0 && window.confirm("Clear chat history? This will reset the conversation context.")) {
+                    setMessages([]);
+                }
+            }}
+            disabled={messages.length === 0}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400"
+            title="Clear Chat History"
+        >
+            <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+
       {/* Overload Warning Banner */}
       {isOverloaded && (
-        <div className="absolute top-0 left-0 right-0 bg-amber-50 border-b border-amber-200 p-3 flex items-center justify-between z-10 animate-in slide-in-from-top-2">
+        <div className="absolute top-[50px] left-0 right-0 bg-amber-50 border-b border-amber-200 p-3 flex items-center justify-between z-20 animate-in slide-in-from-top-2">
             <div className="flex items-center text-amber-800 text-sm">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 <span>The model is experiencing high traffic. Please wait a moment before retrying.</span>
@@ -206,7 +253,37 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Suggestion Chips */}
+      {suggestions.length > 0 && !isLoading && (
+        <div className="px-4 pb-2 flex gap-2 overflow-x-auto scrollbar-hide">
+            {suggestions.map((s, i) => (
+                <button
+                    key={i}
+                    onClick={() => setInput(s)} 
+                    className="flex items-center whitespace-nowrap bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 border border-gray-200 px-3 py-1.5 rounded-full text-xs transition-colors"
+                >
+                    <Sparkles className="w-3 h-3 mr-1.5" />
+                    {s}
+                </button>
+            ))}
+        </div>
+      )}
+
       <div className="p-4 bg-white border-t border-gray-200">
+        {selectedSlideId && currentSlides.length > 0 && (
+            (() => {
+                const selectedSlideIndex = currentSlides.findIndex(s => s.id === selectedSlideId);
+                if (selectedSlideIndex !== -1) {
+                    const slide = currentSlides[selectedSlideIndex];
+                    return (
+                        <div className="mb-2 flex items-center bg-blue-50 text-blue-800 text-sm px-3 py-1 rounded-full w-fit">
+                            <span>Selected Slide: {selectedSlideIndex + 1} - {slide.title}</span>
+                        </div>
+                    );
+                }
+                return null;
+            })()
+        )}
         {attachment && (
             <div className="mb-2 flex items-center bg-gray-100 px-3 py-1 rounded-full w-fit">
                 <span className="text-xs text-gray-600 truncate max-w-[200px]">{attachment.name}</span>
@@ -231,14 +308,6 @@ export function ChatInterface({ messages, setMessages, onUpdateDeck, stylePrompt
             <Paperclip className="h-5 w-5" />
           </button>
 
-          <button 
-            onClick={() => setUseSearch(!useSearch)}
-            className={`p-2 rounded-full transition-colors ${useSearch ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-            title="Toggle Search Grounding"
-          >
-            <Globe className="h-5 w-5" />
-          </button>
-          
           <input
             type="text"
             value={input}

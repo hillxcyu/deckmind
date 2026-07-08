@@ -4,7 +4,13 @@ export interface Slide {
   content: string;
   visualDescription: string;
   imageUrl?: string;
-  status: 'pending' | 'generating' | 'completed' | 'failed';
+  status?: 'pending' | 'generating' | 'completed' | 'failed';
+  generationMode?: 'full' | 'background';
+  imagePrompt?: string;
+  isFlipped?: boolean;
+  imageHistory?: string[];
+  currentImageIndex?: number;
+  generationJobId?: number;
 }
 
 export interface Deck {
@@ -35,6 +41,8 @@ export interface Message {
   attachment?: {
     name: string;
     type: string;
-    data: string; // Base64
+    data?: string; // Base64 (Optional if uploaded)
+    id?: number;   // Server-side ID (Optional if legacy/local)
+    url?: string;  // Preview URL
   };
 }

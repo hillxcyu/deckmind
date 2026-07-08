@@ -17,6 +17,9 @@ export default defineConfig(({mode}) => {
     },
     server: {
       allowedHosts: true,
+      watch: {
+        ignored: ['**/data/**', '**/*.db', '**/*.sqlite', '**/*.sqlite-journal', '**/*.db-journal'],
+      },
     },
   };
 });

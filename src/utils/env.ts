@@ -8,3 +8,15 @@ export const getGeminiApiKey = (): string | undefined => {
   // Check for environment variable
   return process.env.GEMINI_API_KEY;
 };
+
+const getEnv = (key: string, defaultValue: string): string => {
+  if (typeof window !== 'undefined') {
+    const runtimeEnv = (window as any)._env_?.[key];
+    if (runtimeEnv) return runtimeEnv;
+  }
+  return process.env[key] || defaultValue;
+};
+
+export const getMainModel = () => getEnv('GEMINI_MAIN_MODEL', 'gemini-3.1-pro-preview');
+export const getFlashModel = () => getEnv('GEMINI_FLASH_MODEL', 'gemini-3.1-flash-lite-preview');
+export const getImageModel = () => getEnv('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image-preview');

@@ -17,21 +17,38 @@ export const exportToPPTX = async (slides: Slide[], style: DeckStyle) => {
     if (slide.imageUrl) {
         // If image exists, use it as the full slide content
         try {
+            // Ensure we have base64 data even if it's a URL
+            const { base64 } = await getImageData(slide.imageUrl);
+            
             pptxSlide.addImage({
-                data: slide.imageUrl,
+                data: base64,
                 x: 0,
                 y: 0,
                 w: "100%",
-                h: "100%"
+                h: "100%",
+                sizing: { type: "cover", w: "100%", h: "100%" }
             });
         } catch (e) {
             console.error("Failed to add image to slide", e);
-            // Fallback to text if image fails
-            addTextToSlide(pptxSlide, slide, style);
         }
-    } else {
-        // No image, render text
-        addTextToSlide(pptxSlide, slide, style);
+    }
+    
+    // Check generation mode: if 'background', we MUST render text.
+    // If 'full' (or undefined/legacy), we assume the image has text, BUT the user might want editable text anyway?
+    // The previous request said: "I also like the old way where text is rendered by image generation model... so can you make a toggle... but default is the old way."
+    // So:
+    // If 'full' -> Image has text. Do NOT render PPTX text (or render hidden?). The prompt implies we want the *image* to handle design.
+    // If 'background' -> Image is bg. Render PPTX text.
+    
+    // We can check slide.generationMode.
+    // If slide.imageUrl exists AND generationMode !== 'background', we assume it's full mode -> Skip text overlay.
+    // If slide.imageUrl exists AND generationMode === 'background', we render text overlay.
+    // If no image, always render text.
+    
+    const shouldRenderText = !slide.imageUrl || slide.generationMode === 'background';
+    
+    if (shouldRenderText) {
+         addTextToSlide(pptxSlide, slide, style, !!slide.imageUrl);
     }
   }
 
@@ -39,15 +56,17 @@ export const exportToPPTX = async (slides: Slide[], style: DeckStyle) => {
   await pres.writeFile({ fileName: `Presentation-${Date.now()}.pptx` });
 };
 
-function addTextToSlide(pptxSlide: any, slide: Slide, style: DeckStyle) {
-    // Background color based on style
-    if (style.aesthetic === 'minimalist') {
-        pptxSlide.background = { color: "FFFFFF" };
-        pptxSlide.color = "000000";
-    } else if (style.aesthetic === 'vibrant') {
-        pptxSlide.background = { color: "FAFAFA" };
-    } else {
-        pptxSlide.background = { color: "FFFFFF" };
+function addTextToSlide(pptxSlide: any, slide: Slide, style: DeckStyle, hasImage: boolean) {
+    // Background color based on style (only if no image)
+    if (!hasImage) {
+        if (style.aesthetic === 'minimalist') {
+            pptxSlide.background = { color: "FFFFFF" };
+            pptxSlide.color = "000000";
+        } else if (style.aesthetic === 'vibrant') {
+            pptxSlide.background = { color: "FAFAFA" };
+        } else {
+            pptxSlide.background = { color: "FFFFFF" };
+        }
     }
 
     // Title
@@ -58,7 +77,8 @@ function addTextToSlide(pptxSlide: any, slide: Slide, style: DeckStyle) {
       h: 1,
       fontSize: 32,
       bold: true,
-      color: "363636",
+      color: hasImage ? "FFFFFF" : "363636", // White text if image background
+      shadow: hasImage ? { type: 'outer', color: '000000', blur: 3, offset: 2, angle: 45, opacity: 0.5 } : undefined
     });
 
     // Content (Text)
@@ -68,31 +88,100 @@ function addTextToSlide(pptxSlide: any, slide: Slide, style: DeckStyle) {
       w: "90%",
       h: 4,
       fontSize: 18,
-      color: "666666",
-      valign: "top"
+      color: hasImage ? "FFFFFF" : "666666",
+      valign: "top",
+      shadow: hasImage ? { type: 'outer', color: '000000', blur: 3, offset: 2, angle: 45, opacity: 0.5 } : undefined
     });
 }
 
+// Helper to get image dimensions
+const getImageData = async (src: string): Promise<{ base64: string; width: number; height: number }> => {
+  // If it's a URL (from our backend), fetch it first
+  let dataUrl = src;
+  if (src.startsWith('/') || src.startsWith('http')) {
+      const response = await fetch(src);
+      const blob = await response.blob();
+      dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+      });
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ base64: dataUrl, width: img.width, height: img.height });
+    img.src = dataUrl;
+  });
+};
+
 export const exportToPDF = async (slides: Slide[], style: DeckStyle) => {
-  // A4 Landscape: 297mm x 210mm
+  // Determine page format based on the first slide with an image
+  let format: string | number[] = "a4";
+  let orientation: "landscape" | "portrait" = "landscape";
+  let unit: "mm" | "px" = "mm";
+  let width = 297; // Default A4 width in mm
+  let height = 210; // Default A4 height in mm
+
+  const firstImageSlide = slides.find(s => s.imageUrl);
+  
+  if (firstImageSlide?.imageUrl) {
+      try {
+          const dims = await getImageData(firstImageSlide.imageUrl);
+          width = dims.width;
+          height = dims.height;
+          format = [width, height];
+          orientation = width > height ? "landscape" : "portrait";
+          unit = "px";
+      } catch (e) {
+          console.warn("Failed to get image dimensions, falling back to A4", e);
+      }
+  }
+
   const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "mm",
-    format: "a4"
+    orientation: orientation,
+    unit: unit,
+    format: format
   });
 
+  // width/height variables are now correct for the page size (whether px or mm)
+  // Re-fetch page size just to be safe with jsPDF internals
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  slides.forEach((slide, index) => {
+  // We need to use a for...of loop to handle async image fetching sequentially
+  for (let index = 0; index < slides.length; index++) {
+    const slide = slides[index];
     if (index > 0) {
-      doc.addPage();
+      doc.addPage(format, orientation);
     }
 
     if (slide.imageUrl) {
         try {
-            // Full page image
-            doc.addImage(slide.imageUrl, 'PNG', 0, 0, pageWidth, pageHeight);
+            const { base64, width: imgW, height: imgH } = await getImageData(slide.imageUrl);
+            
+            // Full page image with "cover" behavior (maintain aspect ratio)
+            const imgRatio = imgW / imgH;
+            const pageRatio = pageWidth / pageHeight;
+
+            let renderW = pageWidth;
+            let renderH = pageHeight;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            if (imgRatio > pageRatio) {
+                // Image is wider than page: scale by height, crop width
+                renderH = pageHeight;
+                renderW = pageHeight * imgRatio;
+                offsetX = (pageWidth - renderW) / 2; // Center horizontally
+            } else {
+                // Image is taller than page: scale by width, crop height
+                renderW = pageWidth;
+                renderH = pageWidth / imgRatio;
+                offsetY = (pageHeight - renderH) / 2; // Center vertically
+            }
+
+            doc.addImage(base64, 'PNG', offsetX, offsetY, renderW, renderH, undefined, 'FAST');
         } catch (e) {
             console.error("Failed to add image to PDF", e);
             addTextToPDFPage(doc, slide, style, pageWidth, pageHeight, index);
@@ -100,7 +189,7 @@ export const exportToPDF = async (slides: Slide[], style: DeckStyle) => {
     } else {
         addTextToPDFPage(doc, slide, style, pageWidth, pageHeight, index);
     }
-  });
+  }
 
   doc.save(`Presentation-${Date.now()}.pdf`);
 };

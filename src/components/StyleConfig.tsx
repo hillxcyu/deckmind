@@ -255,7 +255,7 @@ export function StyleConfig({ onStyleSet, initialStyle }: StyleConfigProps) {
               Processing Style...
             </>
           ) : (
-            'Start Composing'
+            'Apply'
           )}
         </button>
       </form>
