@@ -5,6 +5,10 @@
 *   [x] **Update src/utils/env.ts:** Update default fallbacks to match.
 *   [x] **Local Verification:** Verify that local build succeeds (`npm run build` succeeds).
 *   [x] **Redeploy:** Triggered GCP Cloud Build (`gcloud builds submit`), which successfully compiled, packaged, and redeployed `deckmind-app` to Cloud Run.
+*   [ ] **Backup Branch:** Create `main-backup` branch for safety.
+*   [ ] **Filter Branch:** Remove `application_default_credentials.json` from git history.
+*   [ ] **Gitignore Update:** Add `application_default_credentials.json` to `.gitignore`.
+*   [ ] **Push:** Push rewritten history to remote.
 
 ## 2025-12-17
 *   [x] **Update Model:** Changed Main Agent model to `gemini-3-pro-preview` in `src/services/agentSystem.ts`.

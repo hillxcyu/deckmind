@@ -3,7 +3,7 @@
 **Date:** Wednesday, 22 July 2026
 
 ## Objective
-Update the main and flash model configuration to use `gemini-3.6-flash` and `gemini-3.5-flash-lite` respectively, and then trigger a deployment to Cloud Run.
+Update the main and flash model configuration to use `gemini-3.6-flash` and `gemini-3.5-flash-lite` respectively, and then trigger a deployment to Cloud Run. Clean up sensitive credentials from local git history to allow pushing to GitHub.
 
 ---
 
@@ -30,3 +30,20 @@ Update the main and flash model configuration to use `gemini-3.6-flash` and `gem
 ### Step 3: Trigger Cloud Build & Cloud Run Deploy (Complete)
 - [x] Execute `gcloud builds submit --config cloudbuild.yaml .` to run the deployment pipeline on Google Cloud Platform.
 - [x] Verify that the deployment completes successfully.
+
+---
+
+## 3. Post-Deployment: Git History Cleanup & Push
+
+### Step 1: Backup Branch
+- Create a backup branch `main-backup` for safety.
+
+### Step 2: Remove Credentials from History
+- Run `git filter-branch` to purge `application_default_credentials.json` from the local commits.
+
+### Step 3: Add to .gitignore
+- Append `application_default_credentials.json` to `.gitignore` to prevent future commits of the credential file.
+- Commit the `.gitignore` change.
+
+### Step 4: Push to Remote
+- Push the rewritten clean branch to remote `main`.

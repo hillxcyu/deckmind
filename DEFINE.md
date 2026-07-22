@@ -8,3 +8,7 @@ Below is the decomposed task list for updating the model configurations and trig
 - [x] **[frontend] [backend] [config]** Update default model fallbacks in `src/utils/env.ts` to match.
 - [x] **[build]** Run local verification (TypeScript check & project compilation) to ensure no errors.
 - [x] **[deploy]** Trigger Cloud Build and deploy to Cloud Run via `gcloud builds submit --config cloudbuild.yaml .`.
+- [ ] **[git]** Create safety backup branch `main-backup`.
+- [ ] **[git]** Purge `application_default_credentials.json` from local git history using `git filter-branch`.
+- [ ] **[git]** Add `application_default_credentials.json` to `.gitignore` and commit it.
+- [ ] **[git]** Push cleaned `main` branch to remote.
