@@ -1,15 +1,10 @@
-# Define: Apply Style to Existing Slides
+# Define - Tasks List
 
-## User Request
-*   When style is updated, apply it to existing slides (update their `imagePrompt`) without regenerating images immediately.
+**Date:** Wednesday, 22 July 2026
 
-## Tasks
-- [frontend] Update `handleStyleSet` in `src/App.tsx`:
-    - Iterate through the existing `slides` state.
-    - Recalculate the `imagePrompt` for each slide using the `constructImagePrompt` helper and the *new* style.
-    - Update the state of `slides` with the new prompt.
-    - Ensure `imageUrl` and `status` remain unchanged so it doesn't trigger a re-render/fetch.
-- [frontend] Import `constructImagePrompt` in `src/App.tsx`.
+Below is the decomposed task list for updating the model configurations and triggering the deployment.
 
-## Dependencies
-- `constructImagePrompt` from `src/services/gemini.ts`.
+- [x] **[backend] [config]** Update model substitutions in `cloudbuild.yaml` (main: `gemini-3.6-flash`, flash: `gemini-3.5-flash-lite`).
+- [x] **[frontend] [backend] [config]** Update default model fallbacks in `src/utils/env.ts` to match.
+- [x] **[build]** Run local verification (TypeScript check & project compilation) to ensure no errors.
+- [x] **[deploy]** Trigger Cloud Build and deploy to Cloud Run via `gcloud builds submit --config cloudbuild.yaml .`.

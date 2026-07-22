@@ -17,6 +17,6 @@ const getEnv = (key: string, defaultValue: string): string => {
   return process.env[key] || defaultValue;
 };
 
-export const getMainModel = () => getEnv('GEMINI_MAIN_MODEL', 'gemini-3.1-pro-preview');
-export const getFlashModel = () => getEnv('GEMINI_FLASH_MODEL', 'gemini-3.1-flash-lite-preview');
+export const getMainModel = () => getEnv('GEMINI_MAIN_MODEL', 'gemini-3.6-flash');
+export const getFlashModel = () => getEnv('GEMINI_FLASH_MODEL', 'gemini-3.5-flash-lite');
 export const getImageModel = () => getEnv('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image-preview');

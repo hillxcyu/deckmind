@@ -1,5 +1,11 @@
 # Action Log
 
+## 2026-07-22 - Model Update & Redeployment
+*   [x] **Update cloudbuild.yaml:** Update main model to `gemini-3.6-flash` and flash model to `gemini-3.5-flash-lite` in substitutions.
+*   [x] **Update src/utils/env.ts:** Update default fallbacks to match.
+*   [x] **Local Verification:** Verify that local build succeeds (`npm run build` succeeds).
+*   [x] **Redeploy:** Triggered GCP Cloud Build (`gcloud builds submit`), which successfully compiled, packaged, and redeployed `deckmind-app` to Cloud Run.
+
 ## 2025-12-17
 *   [x] **Update Model:** Changed Main Agent model to `gemini-3-pro-preview` in `src/services/agentSystem.ts`.
 *   [x] **UI Update:** Renamed "Start Composing" to "Apply" in `src/components/StyleConfig.tsx`.
