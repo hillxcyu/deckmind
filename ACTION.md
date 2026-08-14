@@ -1,5 +1,10 @@
 # Action Log
 
+## 2026-08-14 - Update Model Configuration to gemini-3.7-flash
+*   [x] **Update src/utils/env.ts:** Update default fallbacks for `getMainModel` and `getFlashModel` to `'gemini-3.7-flash'`.
+*   [x] **Update cloudbuild.yaml:** Update `_MAIN_MODEL` and `_FLASH_MODEL` to `'gemini-3.7-flash'`.
+*   [x] **Local Verification:** Run `npm run build` or `tsc` to verify no compilation errors.
+
 ## 2026-07-22 - Model Update & Redeployment
 *   [x] **Update cloudbuild.yaml:** Update main model to `gemini-3.6-flash` and flash model to `gemini-3.5-flash-lite` in substitutions.
 *   [x] **Update src/utils/env.ts:** Update default fallbacks to match.

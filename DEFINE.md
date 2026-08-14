@@ -1,14 +1,11 @@
 # Define - Tasks List
 
-**Date:** Wednesday, 22 July 2026
+**Date:** Friday, 14 August 2026
 
-Below is the decomposed task list for updating the model configurations and triggering the deployment.
+Below is the decomposed task list for updating the model configurations.
 
-- [x] **[backend] [config]** Update model substitutions in `cloudbuild.yaml` (main: `gemini-3.6-flash`, flash: `gemini-3.5-flash-lite`).
-- [x] **[frontend] [backend] [config]** Update default model fallbacks in `src/utils/env.ts` to match.
-- [x] **[build]** Run local verification (TypeScript check & project compilation) to ensure no errors.
-- [x] **[deploy]** Trigger Cloud Build and deploy to Cloud Run via `gcloud builds submit --config cloudbuild.yaml .`.
-- [ ] **[git]** Create safety backup branch `main-backup`.
-- [ ] **[git]** Purge `application_default_credentials.json` from local git history using `git filter-branch`.
-- [ ] **[git]** Add `application_default_credentials.json` to `.gitignore` and commit it.
-- [ ] **[git]** Push cleaned `main` branch to remote.
+- [x] **[frontend] [config]** Update default model fallback for `getMainModel` to `'gemini-3.7-flash'` in `src/utils/env.ts`.
+- [x] **[frontend] [config]** Update default model fallback for `getFlashModel` to `'gemini-3.7-flash'` in `src/utils/env.ts`.
+- [x] **[backend] [config]** Update `_MAIN_MODEL` substitution to `'gemini-3.7-flash'` in `cloudbuild.yaml`.
+- [x] **[backend] [config]** Update `_FLASH_MODEL` substitution to `'gemini-3.7-flash'` in `cloudbuild.yaml`.
+- [x] **[build]** Run local build and type checks to ensure there are no compilation or runtime syntax errors.

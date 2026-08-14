@@ -41,6 +41,6 @@ substitutions:
   _PROJECT_ID: 'universal-trail-492014-n5'
   _REGION: 'asia-east1'
   _MODEL_LOCATION: 'global'
-  _MAIN_MODEL: 'gemini-3.6-flash'
-  _FLASH_MODEL: 'gemini-3.5-flash-lite'
+  _MAIN_MODEL: 'gemini-3.7-flash'
+  _FLASH_MODEL: 'gemini-3.7-flash'
   _IMAGE_MODEL: 'gemini-3-pro-image'
