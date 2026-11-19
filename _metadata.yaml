@@ -33,6 +33,6 @@ artifacts:
 
     link: https://github.com/hillxcyu/deckmind
 featured_artifact_title: GitHub Source Repository
-# images:
-#   - https://storage.cloud.google.com/<bucket>/deckmind-hero.png
-# click_to_deploy_path: <demo_id>-deckmind/tree/main/click-to-deploy
+images:
+  - https://screenshot.googleplex.com/bgeBg6XdSn67UdT.png
+click_to_deploy_path: 2382-ai-slide-deck-generation-studio-with-gemini-and-vertex-ai/tree/main/click-to-deploy
