@@ -35,4 +35,4 @@ artifacts:
 featured_artifact_title: GitHub Source Repository
 images:
   - https://screenshot.googleplex.com/bgeBg6XdSn67UdT.png
-click_to_deploy_path: 2382-ai-slide-deck-generation-studio-with-gemini-and-vertex-ai/tree/main/click-to-deploy
+click_to_deploy_path: 2382-ai-slide-deck-generation-studio-with-gemini-and-vertex-ai/tree/add-click-to-deploy/click-to-deploy
