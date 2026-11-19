@@ -1,0 +1,9 @@
+{
+  "requireOsLogin": "true",
+  "requireShieldedVm": "true",
+  "disableSerialPortAccess": "true",
+  "disableVmExternalIpAccess": "true",
+  "uniformBucketLevelAccess": "true",
+  "allowedIngress": "true",
+  "domainRestrictedSharing": "true"
+}

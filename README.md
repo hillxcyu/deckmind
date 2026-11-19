@@ -28,7 +28,7 @@ The project is configured to use Google Cloud's Vertex AI for model serving. The
 1.  **`application_default_credentials.json`:** Ensure this file is placed in the project's root directory.
 2.  **Environment Variables:** The `docker-compose.yml` file configures the following:
     *   `GOOGLE_GENAI_USE_VERTEXAI=true`
-    *   `GOOGLE_CLOUD_PROJECT=vital-octagon-19612` (Your Google Cloud Project ID)
+    *   `GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID` (Your Google Cloud Project ID)
     *   `GOOGLE_CLOUD_LOCATION=global` (Your Google Cloud location, e.g., `us-central1` or `global`)
     *   `GOOGLE_APPLICATION_CREDENTIALS=/app/application_default_credentials.json` (Path within the container to your ADC file, which is mounted automatically).
 

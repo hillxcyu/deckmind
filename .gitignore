@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 application_default_credentials.json
+.htpasswd
+.agents/
+.claude/
+.gemini/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars

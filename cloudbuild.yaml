@@ -1,3 +1,17 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 options:
   logging: 'CLOUD_LOGGING_ONLY'
 steps:
@@ -36,13 +50,13 @@ images:
   - '$_IMAGE'
 
 substitutions:
-  _IMAGE: 'asia-east1-docker.pkg.dev/universal-trail-492014-n5/deckmind-repo/deckmind-app:latest'
-  _INSTANCE_CONNECTION: 'universal-trail-492014-n5:asia-east1:deckmind-db'
-  _DB_URL: 'postgresql://postgres:X1aoch5an@/deckmind?host=/cloudsql/universal-trail-492014-n5:asia-east1:deckmind-db'
-  _JWT_SECRET: '+VmTWmhaI+lL0JLKRCk/6s4pRtGMhyWpSsCsxGeGUuE='
-  _PROJECT_ID: 'universal-trail-492014-n5'
-  _REGION: 'asia-east1'
+  _IMAGE: 'YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/deckmind-repo/deckmind-app:latest'
+  _INSTANCE_CONNECTION: 'YOUR_PROJECT_ID:YOUR_REGION:deckmind-db'
+  _DB_URL: 'postgresql://postgres:YOUR_DB_PASSWORD@/deckmind?host=/cloudsql/YOUR_PROJECT_ID:YOUR_REGION:deckmind-db'
+  _JWT_SECRET: 'YOUR_JWT_SECRET'
+  _PROJECT_ID: 'YOUR_PROJECT_ID'
+  _REGION: 'YOUR_REGION'
   _MODEL_LOCATION: 'global'
   _MAIN_MODEL: 'gemini-3.7-flash'
   _FLASH_MODEL: 'gemini-3.7-flash'
-  _IMAGE_MODEL: 'gemini-3-pro-image'
+  _IMAGE_MODEL: 'gemini-3.1-flash-image-preview'

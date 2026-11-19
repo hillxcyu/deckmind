@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=./git-based-demos-schema.json
+file_type: demo
+type: application
+title: AI Slide Deck Generation Studio with Gemini and Vertex AI
+thumbnail_summary: Compress executive deck creation from 8 hours to under 3 minutes using multi-agent Gemini research, brand style extraction, and Vertex AI 16:9 image generation.
+purpose: |
+  Built for **Chief Marketing Officers, VP of Sales Enablement, and Enterprise Strategy Leads**, this interactive web application eliminates the manual bottleneck of researching market facts, formatting slide layouts, and sourcing on-brand visuals for executive briefings.
+
+  During a live customer pitch, sellers walk buyers through extracting a company's visual brand identity from a name or URL, generating a Google Search-grounded presentation outline for human-in-the-loop approval, producing custom 16:9 slide imagery via Vertex AI, and exporting an editable PowerPoint or PDF deck in minutes.
+business_value: |
+  * **Compress Presentation Turnaround by 90%:** Shrinks end-to-end slide research, copywriting, and visual layout from 6–10 hours of manual assembly to under 3 minutes per deck.
+  * **Enforce Brand Consistency at Scale:** Automatically extracts color palettes, typography, and visual mood from brand references so every generated slide adheres to corporate identity standards.
+  * **Eliminate Stock Imagery & Rework Costs:** Generates bespoke 16:9 slide visuals and supports conversational single-slide edits without restarting the entire deck.
+technical_value: |
+  * **Human-in-the-Loop Multi-Agent Orchestration:** Coordinates a Google Search-grounded Research Agent and a structured Slide Authoring Agent on Vertex AI Gemini, pausing for outline approval before deck generation.
+  * **Asynchronous 16:9 Visual Synthesis:** Offloads high-resolution slide and background image generation to Vertex AI Image Generation via non-blocking background jobs persisted in Cloud SQL for PostgreSQL.
+  * **Enterprise-Ready Serverless Security:** Runs containerized on Cloud Run with load-balancer-only ingress behind an External HTTPS Application Load Balancer and Identity-Aware Proxy, using Secret Manager and a least-privilege service account.
+owner: xcyu
+team_owner: 1670033130013
+demo_guide: https://docs.google.com/document/d/1mHjF7VnX-Q88iqymKPuqxjQITQIhl2pIh2QZIrP5rB4/edit
+products:
+  - vertex_ai
+  - vertex_gemini_api
+  - vertex_imagen_api
+  - cloud_run
+industries:
+  - all
+  - media_entertainment
+artifacts:
+  - title: GitHub Source Repository
+
+    type: code_repo
+
+    link: https://github.com/hillxcyu/deckmind
+featured_artifact_title: GitHub Source Repository
+# images:
+#   - https://storage.cloud.google.com/<bucket>/deckmind-hero.png
+# click_to_deploy_path: <demo_id>-deckmind/tree/main/click-to-deploy
